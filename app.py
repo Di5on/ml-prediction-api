@@ -7,6 +7,7 @@ from pydantic import BaseModel,Field
 logging.basicConfig(level=logging.INFO)
 
 model = joblib.load("model/game_sales_model.pkl")
+model_v2 = joblib.load("model/game_sales_model_v2.pkl")
 
 app = FastAPI(
     title="Video Game Sales Prediction API",
@@ -41,6 +42,31 @@ def predict_sales(game: GameInput):
                 }
             }
 
+    except Exception as e:
+        return {
+            "error": str(e)
+        }
+
+
+
+class GameInputV2(BaseModel):
+    Platform: str
+    Genre: str
+    Publisher: str
+    Year: float
+
+@app.post("/predict_v2")
+def predict_sales_v2(game: GameInputV2):
+    logging.info(f"Received input: {game}")
+    try:
+        input_data = pd.DataFrame([game.dict()])
+        prediction = model_v2.predict(input_data)[0]
+
+        return {
+            "model": "v2",
+            "predicted_global_sales": round(float(prediction), 2)
+        }
+    
     except Exception as e:
         return {
             "error": str(e)
